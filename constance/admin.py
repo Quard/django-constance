@@ -53,8 +53,10 @@ if not six.PY3:
 class ConstanceForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super(ConstanceForm, self).__init__(*args, **kwargs)
-        for name, (default, help_text) in settings.CONFIG.items():
+        for name, (default, help_text, params) in settings.CONFIG.items():
             field_class, kwargs = FIELDS[type(default)]
+            if 'choices' in params:
+                kwargs['widget'] = forms.Select(choices=params['choices'])
             self.fields[name] = field_class(label=name, **kwargs)
 
     def save(self):
@@ -81,7 +83,7 @@ class ConstanceAdmin(admin.ModelAdmin):
         if not self.has_change_permission(request, None):
             raise PermissionDenied
         default_initial = ((name, default)
-            for name, (default, help_text) in settings.CONFIG.items())
+            for name, (default, help_text, params) in settings.CONFIG.items())
         # Then update the mapping with actually values from the backend
         initial = dict(default_initial,
             **dict(config._backend.mget(settings.CONFIG.keys())))
@@ -105,7 +107,7 @@ class ConstanceAdmin(admin.ModelAdmin):
             'form': form,
             'media': self.media + form.media,
         }
-        for name, (default, help_text) in settings.CONFIG.items():
+        for name, (default, help_text, params) in settings.CONFIG.items():
             # First try to load the value from the actual backend
             value = initial.get(name)
             # Then if the returned value is None, get the default
