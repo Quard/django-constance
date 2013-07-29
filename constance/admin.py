@@ -2,6 +2,7 @@ from datetime import datetime, date, time
 from decimal import Decimal
 from operator import itemgetter
 import six
+from copy import copy
 
 from django import forms
 from django.contrib import admin, messages
@@ -55,6 +56,7 @@ class ConstanceForm(forms.Form):
         super(ConstanceForm, self).__init__(*args, **kwargs)
         for name, (default, help_text, params) in settings.CONFIG.items():
             field_class, kwargs = FIELDS[type(default)]
+            kwargs = copy(kwargs)
             if 'choices' in params:
                 kwargs['widget'] = forms.Select(choices=params['choices'])
             self.fields[name] = field_class(label=name, **kwargs)
